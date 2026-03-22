@@ -2,7 +2,6 @@ from fastapi import FastAPI
 
 from src.routers.telemetry import router as telemetry_router
 
-
 app = FastAPI(
     title="Rocket Lab Satellite Telemetry API",
     version="0.1.0",
@@ -18,4 +17,4 @@ def read_root() -> dict[str, str]:
 
 @app.get("/health", tags=["root"])
 def health_check() -> dict[str, str]:
-    return {}
+    return {"status": "ok"}
