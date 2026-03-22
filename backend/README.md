@@ -21,13 +21,13 @@ backend/
 1. Create and activate a virtual environment.
 2. Install runtime dependencies:
 
-```powershell
+```sh
 pip install -r requirements.txt
 ```
 
 3. Optional: install test dependencies:
 
-```powershell
+```sh
 pip install -r test-requirements.txt
 ```
 
@@ -35,7 +35,7 @@ pip install -r test-requirements.txt
 
 From the `backend` directory:
 
-```powershell
+```sh
 uvicorn app.main:app --reload
 ```
 
@@ -54,6 +54,8 @@ Interactive docs are available at `http://127.0.0.1:8000/docs`.
 
 ## Test
 
-```powershell
+From the `backend` directory:
+
+```sh
 pytest
 ```
