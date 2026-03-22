@@ -6,6 +6,7 @@ Test summary:
 | ------------------------- | --------------------- | --------- |
 | health                    | GET /health           | 200       |
 | list data                 | GET /telemetry        | 200, >=2  |
+| list pagination           | GET /telemetry        | 200, paged|
 | get by id                 | GET /telemetry/id     | 200       |
 | create valid timestamp    | POST /telemetry       | 201       |
 | delete by id              | DELETE /telemetry/id  | 200       |
@@ -36,6 +37,30 @@ def test_list_telemetry_returns_seed_data() -> None:
 
     assert response.status_code == 200
     assert len(response.json()) >= 2
+
+
+def test_list_telemetry_supports_pagination() -> None:
+    """Telemetry list supports offset/limit pagination."""
+    status_value = "PAGINATION_TEST_STATUS"
+
+    for i in range(3):
+        payload = {
+            "satelliteId": f"SAT-PAGE-{i}",
+            "timestamp": "2026-03-22T15:30:00Z",
+            "altitude": 7000.0 + i,
+            "velocity": 7900.0 + i,
+            "status": status_value,
+        }
+        create_response = client.post("/telemetry", json=payload)
+        assert create_response.status_code == 201
+
+    first_page = client.get(f"/telemetry?status={status_value}&offset=0&limit=2")
+    second_page = client.get(f"/telemetry?status={status_value}&offset=2&limit=2")
+
+    assert first_page.status_code == 200
+    assert second_page.status_code == 200
+    assert len(first_page.json()) == 2
+    assert len(second_page.json()) == 1
 
 
 def test_create_telemetry_accepts_iso8601_timestamp() -> None:

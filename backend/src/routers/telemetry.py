@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Query, status
 
 # Keep data-access concerns in the service layer, not in endpoint handlers.
 from src.services.data_service import data_service
@@ -7,8 +7,13 @@ from src.models import Telemetry, TelemetryCreate
 router = APIRouter()
 
 @router.get("/telemetry", response_model=list[Telemetry], tags=["telemetry"])
-def list_telemetry(satteliteId: str | None = None, status: str | None = None) -> list[Telemetry]:
-    """List telemetry entries with optional filters for satteliteId and status."""
+def list_telemetry(
+    satteliteId: str | None = None,
+    status: str | None = None,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=100, ge=1),
+) -> list[Telemetry]:
+    """List telemetry entries with optional filters and pagination."""
     # Fetch all telemetry entries. Since this uses a simple in-memory store,
     # reading all records is acceptable here.
     # For a production-scale datastore, filtering should happen in the database
@@ -21,8 +26,11 @@ def list_telemetry(satteliteId: str | None = None, status: str | None = None) ->
     if status:
         telemetry_results = filter(lambda t: t.status == status, telemetry_results)
     
-    # Return the filtered results as a concrete list.
-    return list(telemetry_results)
+    # Apply pagination after filtering so pages reflect the filtered dataset.
+    paged_results = list(telemetry_results)[offset : offset + limit]
+
+    # Return the paginated results as a concrete list.
+    return paged_results
 
 @router.get("/telemetry/{telemetry_id}", response_model=Telemetry, tags=["telemetry"])
 def get_telemetry(telemetry_id: int) -> Telemetry:
