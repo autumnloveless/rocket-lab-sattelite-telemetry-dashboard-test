@@ -8,9 +8,12 @@ app = FastAPI(
     description="Basic FastAPI backend scaffold with an in-memory data store.",
 )
 
+# using a separate module for the telemetry API endpoints to support
+# clean seperation of data as the app grows
 app.include_router(telemetry_router)
 
-
+# including basic health endpoints here for checking
+# the service is running correctly.
 @app.get("/", tags=["root"])
 def read_root() -> dict[str, str]:
     return {"message": "Rocket Lab telemetry API is running."}

@@ -1,3 +1,19 @@
+"""API endpoint tests."""
+
+"""
+Test summary:
+| Test                      | Endpoint              | Expect    |
+| ------------------------- | --------------------- | --------- |
+| health                    | GET /health           | 200       |
+| list data                 | GET /telemetry        | 200, >=2  |
+| get by id                 | GET /telemetry/id     | 200       |
+| create valid timestamp    | POST /telemetry       | 201       |
+| delete by id              | DELETE /telemetry/id  | 200       |
+| reject bad timestamp      | POST /telemetry       | 422       |
+| reject negative altitude  | POST /telemetry       | 422       |
+| reject negative velocity  | POST /telemetry       | 422       |
+"""
+
 from fastapi.testclient import TestClient
 
 from src.main import app
@@ -7,6 +23,7 @@ client = TestClient(app)
 
 
 def test_health_endpoint() -> None:
+    """Health endpoint returns ok."""
     response = client.get("/health")
 
     assert response.status_code == 200
@@ -14,6 +31,7 @@ def test_health_endpoint() -> None:
 
 
 def test_list_telemetry_returns_seed_data() -> None:
+    """Telemetry list returns seed data."""
     response = client.get("/telemetry")
 
     assert response.status_code == 200
@@ -21,6 +39,7 @@ def test_list_telemetry_returns_seed_data() -> None:
 
 
 def test_create_telemetry_accepts_iso8601_timestamp() -> None:
+    """Create accepts ISO 8601 timestamps."""
     payload = {
         "satelliteId": "SAT-TEST",
         "timestamp": "2026-03-22T15:30:00Z",
@@ -35,7 +54,47 @@ def test_create_telemetry_accepts_iso8601_timestamp() -> None:
     assert response.json()["timestamp"] == "2026-03-22T15:30:00Z"
 
 
+def test_get_telemetry_by_id_returns_record() -> None:
+    """Get by ID returns a telemetry record."""
+    payload = {
+        "satelliteId": "SAT-GET",
+        "timestamp": "2026-03-22T15:30:00Z",
+        "altitude": 6200.0,
+        "velocity": 7802.0,
+        "status": "SOLAR_INERTIAL",
+    }
+
+    create_response = client.post("/telemetry", json=payload)
+    telemetry_id = create_response.json()["id"]
+    response = client.get(f"/telemetry/{telemetry_id}")
+
+    assert create_response.status_code == 201
+    assert response.status_code == 200
+    assert response.json()["id"] == telemetry_id
+
+
+def test_delete_telemetry_by_id_removes_record() -> None:
+    """Delete by ID removes a telemetry record."""
+    payload = {
+        "satelliteId": "SAT-DELETE",
+        "timestamp": "2026-03-22T15:30:00Z",
+        "altitude": 6201.0,
+        "velocity": 7803.0,
+        "status": "SOLAR_INERTIAL",
+    }
+
+    create_response = client.post("/telemetry", json=payload)
+    telemetry_id = create_response.json()["id"]
+    delete_response = client.delete(f"/telemetry/{telemetry_id}")
+    get_response = client.get(f"/telemetry/{telemetry_id}")
+
+    assert create_response.status_code == 201
+    assert delete_response.status_code == 200
+    assert get_response.status_code == 404
+
+
 def test_create_telemetry_rejects_invalid_timestamp() -> None:
+    """Create rejects invalid timestamps."""
     payload = {
         "satelliteId": "SAT-TEST",
         "timestamp": "03/22/2026 15:30:00",
@@ -50,6 +109,7 @@ def test_create_telemetry_rejects_invalid_timestamp() -> None:
 
 
 def test_create_telemetry_rejects_negative_altitude() -> None:
+    """Create rejects negative altitude."""
     payload = {
         "satelliteId": "SAT-TEST",
         "timestamp": "2026-03-22T15:30:00Z",
@@ -66,6 +126,7 @@ def test_create_telemetry_rejects_negative_altitude() -> None:
 
 
 def test_create_telemetry_rejects_negative_velocity() -> None:
+    """Create rejects negative velocity."""
     payload = {
         "satelliteId": "SAT-TEST",
         "timestamp": "2026-03-22T15:30:00Z",
