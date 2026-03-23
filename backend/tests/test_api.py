@@ -63,6 +63,27 @@ def test_list_telemetry_supports_pagination() -> None:
     assert len(second_page.json()) == 1
 
 
+def test_list_telemetry_filters_by_satellite_id() -> None:
+    """Telemetry list supports filtering by the `satelliteId` query param."""
+    payload = {
+        "satelliteId": "SAT-FILTER-CORRECT",
+        "timestamp": "2026-03-22T15:30:00Z",
+        "altitude": 7010.0,
+        "velocity": 7910.0,
+        "status": "healthy",
+    }
+
+    create_response = client.post("/telemetry", json=payload)
+    assert create_response.status_code == 201
+
+    response = client.get("/telemetry?satelliteId=SAT-FILTER-CORRECT")
+    records = response.json()
+
+    assert response.status_code == 200
+    assert len(records) >= 1
+    assert all(record["satelliteId"] == "SAT-FILTER-CORRECT" for record in records)
+
+
 def test_create_telemetry_accepts_iso8601_timestamp() -> None:
     """Create accepts ISO 8601 timestamps."""
     payload = {

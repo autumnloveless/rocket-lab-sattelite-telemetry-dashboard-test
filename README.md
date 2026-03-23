@@ -1,13 +1,30 @@
 # Satellite Telemetry Dashboard
 
-## Goal
-Build a small, testable full-stack dashboard to manage and view satellite telemetry data.
+## Overview
+This project is a small full-stack telemetry dashboard intended for a coding assignment.
 
-## Solution
-- Backend: Python + FastAPI API with an in-memory database, Pydantic validation, and pytest unit tests.
-- Frontend: React (Vite) app using SWR for data fetching and TailwindCSS + AstroUXDS for styling.
-- Testing: Backend uses pytest. Frontend uses Vitest + React Testing Library for high-level tests.
-- Containers: Backend and frontend are containerized, with a top-level Docker Compose setup to run both together.
+Implemented functionality:
+- Display telemetry table columns: Satellite ID, Timestamp, Altitude, Velocity, Health Status.
+- Filter telemetry by Satellite ID and Health Status.
+- Add new telemetry entries.
+- Delete telemetry entries.
+
+## Tech Stack
+- Backend: FastAPI + Pydantic + in-memory data store.
+- Frontend: React + TypeScript + Vite.
+- UI: AstroUXDS component library + TailwindCSS.
+- Data fetching: SWR.
+- Filter URL state: React Router search params.
+
+## Architecture Notes
+- Frontend API access is centralized in `frontend/src/services/telemetryService.ts`.
+- SWR data flow lives in `frontend/src/hooks/useTelemetry.ts`.
+- URL query params (`satelliteId`, `status`) are the source of truth for filter state.
+- UI is split into focused components:
+	- `TelemetryFilters`
+	- `TelemetryForm`
+	- `TelemetryTable`
+	- `TelemetryDashboardPage`
 
 ## Run Locally
 
@@ -16,7 +33,7 @@ From `backend`:
 
 ```powershell
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+uvicorn src.main:app --reload
 ```
 
 API docs: http://127.0.0.1:8000/docs

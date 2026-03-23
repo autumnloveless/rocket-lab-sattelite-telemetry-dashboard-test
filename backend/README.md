@@ -36,7 +36,7 @@ pip install -r test-requirements.txt
 From the `backend` directory:
 
 ```sh
-uvicorn app.main:app --reload
+uvicorn src.main:app --reload
 ```
 
 The API will start at `http://127.0.0.1:8000`.

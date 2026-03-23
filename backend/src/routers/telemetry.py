@@ -8,7 +8,7 @@ router = APIRouter()
 
 @router.get("/telemetry", response_model=list[Telemetry], tags=["telemetry"])
 def list_telemetry(
-    satteliteId: str | None = None,
+    satelliteId: str | None = None,
     status: str | None = None,
     offset: int = Query(default=0, ge=0),
     limit: int = Query(default=100, ge=1),
@@ -21,8 +21,8 @@ def list_telemetry(
     telemetry_results = data_service.list_telemetry()
     
     # Apply optional query filters.
-    if satteliteId:
-        telemetry_results = filter(lambda t: t.satelliteId == satteliteId, telemetry_results)
+    if satelliteId:
+        telemetry_results = filter(lambda t: t.satelliteId == satelliteId, telemetry_results)
     if status:
         telemetry_results = filter(lambda t: t.status == status, telemetry_results)
     
