@@ -1,4 +1,6 @@
 # Satellite Telemetry Dashboard
+[![Netlify Status](https://api.netlify.com/api/v1/badges/693db0cb-0dd4-406e-8199-91b5a3cee1e3/deploy-status)](https://app.netlify.com/projects/satdashboard/deploys)
+
 
 ## Overview
 This project is a small full-stack telemetry dashboard intended for a coding assignment.
