@@ -6,7 +6,8 @@ import { TelemetryForm } from "../components/TelemetryForm";
 import { TelemetryTable } from "../components/TelemetryTable";
 import { useTelemetry } from "../hooks/useTelemetry";
 
-export const TelemetryDashboardPage = () => {  
+export const TelemetryDashboardPage = () => { 
+  // Control dialog with state 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
   // Using SWR for data fetching to simplify validation
@@ -15,37 +16,32 @@ export const TelemetryDashboardPage = () => {
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      {/* Header */}
       <RuxGlobalStatusBar className="p-4 my-2" includeIcon={true} menuIcon="satellite-transmit" appDomain="Rocket Lab" appName="Satellite Telemetry Dashboard" appVersion="1.0">
         <RuxClock />
       </RuxGlobalStatusBar>
 
-        <RuxNotification open={Boolean(errorMessage)} status="critical" message={`Failed to load telemetry data: ${errorMessage ?? ""}`} />
+      {/* Error notification */}
+      <RuxNotification open={Boolean(errorMessage)} status="critical" message={`Failed to load telemetry data: ${errorMessage ?? ""}`} />
         
-        <div className="flex flex-col gap-4 py-2">
-          <div className="self-end flex items-center gap-2">
-            <RuxButton secondary onClick={() => void refreshTelemetry()}>
-              Refresh
-            </RuxButton>
-            <RuxButton icon="add" onClick={() => setIsCreateDialogOpen(true)}>
-              Add Telemetry Entry
-            </RuxButton>
-          </div>
-
-          <TelemetryFilters satelliteIds={satelliteIds} />
-
-          <TelemetryForm
-            onCreateTelemetry={createTelemetry}
-            isOpen={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
-          />
-
-          <TelemetryTable
-            telemetry={telemetry}
-            isLoading={isLoading}
-            onDeleteTelemetry={deleteTelemetry}
-          />
+      {/* Data */}
+      <div className="flex flex-col gap-4 py-2">
+        
+        {/* Buttons */}
+        <div className="self-end flex items-center gap-2">
+          <RuxButton secondary onClick={() => void refreshTelemetry()}>Refresh</RuxButton>
+          <RuxButton icon="add" onClick={() => setIsCreateDialogOpen(true)}>Add Telemetry Entry</RuxButton>
         </div>
 
+        {/* Create Dialog */}
+        <TelemetryForm onCreateTelemetry={createTelemetry} isOpen={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen} />
+
+        {/* Filters */}
+        <TelemetryFilters satelliteIds={satelliteIds} />
+
+        {/* Data Table */}
+        <TelemetryTable telemetry={telemetry} isLoading={isLoading} onDeleteTelemetry={deleteTelemetry} />
+      </div>
     </main>
   );
 };

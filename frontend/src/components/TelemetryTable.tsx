@@ -1,16 +1,8 @@
 import { useState } from "react";
-import { RuxButton, RuxContainer, RuxDialog, RuxTag } from "@astrouxds/react";
 import type { StatusTags } from "@astrouxds/astro-web-components";
-import {
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  useReactTable,
-  type ColumnDef,
-  type PaginationState,
-  type SortingState,
-} from "@tanstack/react-table";
+import { RuxButton, RuxContainer, RuxDialog, RuxTag } from "@astrouxds/react";
+import type { ColumnDef, PaginationState, SortingState } from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable } from "@tanstack/react-table";
 
 import type { Telemetry } from "../types/telemetry";
 
@@ -20,70 +12,52 @@ type TelemetryTableProps = {
   onDeleteTelemetry: (telemetryId: number) => Promise<void>;
 };
 
-const TagStatus: Record<string, StatusTags> = {
-  healthy: "pass",
-  critical: "fail",
-  warning: "unknown",
-};
-
 const formatTimestamp = (timestamp: string): string => {
   const parsed = new Date(timestamp);
   if (Number.isNaN(parsed.getTime())) {
+    // Preserve original server value if parsing fails instead of showing an invalid date.
     return timestamp;
   }
 
   return parsed.toISOString().replace("T", " ").replace("Z", " UTC");
 };
 
-export const TelemetryTable = ({
-  telemetry,
-  isLoading,
-  onDeleteTelemetry,
-}: TelemetryTableProps) => {
+export const TelemetryTable = ({ telemetry, isLoading, onDeleteTelemetry }: TelemetryTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 10 });
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  function DeleteButton({ id }: {id: number }) {
-    return (
-      <RuxButton iconOnly borderless icon="delete" size="small" onClick={() => setPendingDeleteId(id)}>Delete</RuxButton>
-    );
-  }
-
+  // Resolve the pending row from the latest telemetry array so dialog details stay in sync.
   const pendingDeleteTelemetry = pendingDeleteId === null
-    ? null
-    : telemetry.find((entry) => entry.id === pendingDeleteId) ?? null;
-
+  ? null
+  : telemetry.find((entry) => entry.id === pendingDeleteId) ?? null;
+  
   const onConfirmDelete = async () => {
     if (pendingDeleteId === null) {
       return;
     }
-
+    
     try {
       setIsDeleting(true);
       await onDeleteTelemetry(pendingDeleteId);
       setPendingDeleteId(null);
     } finally {
+      // Always unlock the dialog actions, even if the delete request fails.
       setIsDeleting(false);
     }
   };
-
-  function Tag({ status }: {status: string }) {
-    return (
-      <RuxTag status={TagStatus[status] ?? "unknown"}>{status}</RuxTag>
-    );
-  }
-
+  
+  // Column Definitions
+  const TagStatus: Record<string, StatusTags> = { healthy: "pass", critical: "fail", warning: "unknown" };
+  const DeleteButton = ({ id }: {id: number }) => <RuxButton iconOnly borderless icon="delete" size="small" onClick={() => setPendingDeleteId(id)}>Delete</RuxButton>
   const columns: ColumnDef<Telemetry>[] = [
+    { accessorKey: "id", header: "ID", cell: ({ row }) => row.original.id },
     { accessorKey: "satelliteId", header: "Satellite ID", cell: ({ row }) => row.original.satelliteId },
     { accessorKey: "timestamp", header: "Timestamp", cell: ({ row }) => formatTimestamp(row.original.timestamp) },
     { accessorKey: "altitude", header: "Altitude", cell: ({ row }) => Number(row.original.altitude ?? 0).toFixed(2) },
     { accessorKey: "velocity", header: "Velocity", cell: ({ row }) => Number(row.original.velocity ?? 0).toFixed(2) },
-    { accessorKey: "status", header: "Health Status", cell: ({ row }) => <Tag status={row.original.status} /> },
+    { accessorKey: "status", header: "Health Status", cell: ({ row }) => <RuxTag status={TagStatus[row.original.status] ?? "unknown"}>{row.original.status}</RuxTag> },
     { id: "actions", header: "Actions", enableSorting: false, cell: ({ row }) => <DeleteButton id={row.original.id} /> },
   ]
 
@@ -105,7 +79,7 @@ export const TelemetryTable = ({
         <span className="text-sm opacity-80">{telemetry.length} record(s)</span>
       </div>
 
-      <div className="mt-2 h-[440px] w-full overflow-auto">
+      <div className="mt-2 w-full overflow-auto">
         <table>
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -116,6 +90,7 @@ export const TelemetryTable = ({
                   return (
                     <th key={header.id}>
                       {header.isPlaceholder ? null : (
+                        // column header sort buttons
                         <button
                           type="button"
                           className="inline-flex cursor-pointer items-center gap-2 bg-transparent text-left"
@@ -170,21 +145,17 @@ export const TelemetryTable = ({
           <span className="text-sm opacity-80">
             Page {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
           </span>
-          <RuxButton
-            secondary
-            size="small"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
+        <RuxButton secondary size="small" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
             Next
           </RuxButton>
         </div>
 
+      {/* Delete Confirmation Dialog */}
       <RuxDialog open={pendingDeleteId !== null} onRuxdialogclosed={() => setPendingDeleteId(null)}>
         <span slot="header">Confirm Delete</span>
         <div className="p-4">
           {pendingDeleteTelemetry
-            ? `Delete telemetry entry ${pendingDeleteTelemetry.satelliteId} from ${formatTimestamp(pendingDeleteTelemetry.timestamp)}?`
+            ? `Delete telemetry entry ${pendingDeleteTelemetry.id} from ${formatTimestamp(pendingDeleteTelemetry.timestamp)}?`
             : "Delete this telemetry entry?"}
         </div>
         <div slot="footer" className="flex justify-end gap-2">
@@ -196,6 +167,7 @@ export const TelemetryTable = ({
           </RuxButton>
         </div>
       </RuxDialog>
+
     </RuxContainer>
   );
 };

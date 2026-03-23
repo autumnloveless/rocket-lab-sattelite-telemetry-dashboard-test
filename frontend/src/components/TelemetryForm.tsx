@@ -37,16 +37,19 @@ export const TelemetryForm = ({ onCreateTelemetry, isOpen, onOpenChange }: Telem
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // form validation
+  const updateField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setFormState((prev) => ({ ...prev, [key]: value }));
+  };
+
+  // Submit Button Validation
   const canSubmit = (
-    Boolean(formState.satelliteId.trim()) && 
-    Boolean(formState.timestampLocal) && 
+    Boolean(formState.satelliteId.trim()) &&
+    Boolean(formState.timestampLocal) &&
     Number(formState.altitude) > 0 &&
     Number(formState.velocity) > 0
   );
 
-  const onSubmit = async (event: React.SubmitEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const onSubmit = async () => {
     setSubmitError(null);
 
     // perform form validation
@@ -88,92 +91,70 @@ export const TelemetryForm = ({ onCreateTelemetry, isOpen, onOpenChange }: Telem
     >
       <span slot="header">Add Telemetry Entry</span>
 
-        <div className="p-4">
-          <form className="grid gap-3 md:grid-cols-2" onSubmit={onSubmit}>
-            <RuxInput
-              required
-              label="Satellite ID"
-              value={formState.satelliteId}
-              onInput={(event) => {
-                setFormState((prev) => ({
-                  ...prev,
-                  satelliteId: (event.target as HTMLInputElement).value,
-                }));
-              }}
-            />
+      <div className="p-4">
+        <form className="grid gap-3 md:grid-cols-2">
+          <RuxInput
+            required
+            label="Satellite ID"
+            value={formState.satelliteId}
+            onInput={(event) => updateField("satelliteId", (event.target as HTMLInputElement).value)}
+          />
 
-            <RuxInput
-              required
-              label="Timestamp (UTC)"
-              type="datetime-local"
-              value={formState.timestampLocal}
-              onInput={(event) => {
-                setFormState((prev) => ({
-                  ...prev,
-                  timestampLocal: (event.target as HTMLInputElement).value,
-                }));
-              }}
-            />
+          <RuxInput
+            required
+            label="Timestamp (UTC)"
+            type="datetime-local"
+            value={formState.timestampLocal}
+            onInput={(event) => updateField("timestampLocal", (event.target as HTMLInputElement).value)}
+          />
 
-            <RuxInput
-              required
-              label="Altitude"
-              type="number"
-              min="0.000001"
-              step="0.01"
-              value={formState.altitude}
-              onInput={(event) => {
-                setFormState((prev) => ({
-                  ...prev,
-                  altitude: (event.target as HTMLInputElement).value,
-                }));
-              }}
-            />
+          <RuxInput
+            required
+            label="Altitude"
+            type="number"
+            min="0.000001"
+            step="0.01"
+            value={formState.altitude}
+            onInput={(event) => updateField("altitude", (event.target as HTMLInputElement).value)}
+          />
 
-            <RuxInput
-              required
-              label="Velocity"
-              type="number"
-              min="0.000001"
-              step="0.01"
-              value={formState.velocity}
-              onInput={(event) => {
-                setFormState((prev) => ({
-                  ...prev,
-                  velocity: (event.target as HTMLInputElement).value,
-                }));
-              }}
-            />
+          <RuxInput
+            required
+            label="Velocity"
+            type="number"
+            min="0.000001"
+            step="0.01"
+            value={formState.velocity}
+            onInput={(event) => updateField("velocity", (event.target as HTMLInputElement).value)}
+          />
 
-            <RuxSelect
-              label="Health Status"
-              value={formState.status}
-              onRuxchange={(event) => {
-                const nextStatus = (event.currentTarget as HTMLRuxSelectElement).value as HealthStatus;
-                setFormState((prev) => ({ ...prev, status: nextStatus }));
-              }}
-            >
-              {HEALTH_STATUS_OPTIONS.map((statusOption) => (
-                <RuxOption key={statusOption} value={statusOption} label={statusOption}>
-                  {statusOption}
-                </RuxOption>
-              ))}
-            </RuxSelect>
+          <RuxSelect
+            label="Health Status"
+            value={formState.status}
+            onRuxchange={(event) => {
+              const nextStatus = (event.currentTarget as HTMLRuxSelectElement).value as HealthStatus;
+              updateField("status", nextStatus);
+            }}
+          >
+            {HEALTH_STATUS_OPTIONS.map((statusOption) => (
+              <RuxOption key={statusOption} value={statusOption} label={statusOption}>
+                {statusOption}
+              </RuxOption>
+            ))}
+          </RuxSelect>
 
-            <div className="md:col-span-2 flex items-center gap-2">
-              <RuxButton type="submit" disabled={!canSubmit || isSubmitting}>
-                {isSubmitting ? "Saving..." : "Add Entry"}
-              </RuxButton>
-              {submitError ? (
-                <p className="text-sm text-red-300">{submitError}</p>
-              ) : null}
-            </div>
-          </form>
-        </div>
+          <div className="md:col-span-2 flex items-center gap-2">
+            {submitError ? <p className="text-sm text-red-300">{submitError}</p> : null}
+          </div>
+        </form>
+      </div>
 
-      <div slot="footer" className="flex justify-end">
+      <div slot="footer" className="flex justify-between">
         <RuxButton secondary onClick={() => onOpenChange(false)}>
           Close
+        </RuxButton>
+        <RuxButton onClick={onSubmit} disabled={!canSubmit || isSubmitting}>
+          {isSubmitting ? "Saving..." : "Add Entry"}
         </RuxButton>
       </div>
     </RuxDialog>

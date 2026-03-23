@@ -6,74 +6,79 @@ type TelemetryFiltersProps = {
   satelliteIds: string[];
 };
 
-export const TelemetryFilters = ({ satelliteIds }: TelemetryFiltersProps) => {
+const getSelectValue = (value: string | string[] | undefined): string => {
+  if (Array.isArray(value)) {
+    return value[0] ?? "";
+  }
 
+  return value ?? "";
+};
+
+export const TelemetryFilters = ({ satelliteIds }: TelemetryFiltersProps) => {
   const [searchParams, setSearchParams] = useSearchParams();
+
+  const updateFilter = (key: "satelliteId" | "status", value: string) => {
+    const next = new URLSearchParams(searchParams);
+
+    if (value.trim()) {
+      next.set(key, value);
+    } else {
+      next.delete(key);
+    }
+
+    setSearchParams(next);
+  };
 
   return (
     <div>
-        <RuxContainer className="">
+      <RuxContainer>
         <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold tracking-wide">Filters</h2>
-            <RuxButton secondary size="small" onClick={() => setSearchParams({})}>Clear</RuxButton>
+          <h2 className="text-lg font-semibold tracking-wide">Filters</h2>
+          <RuxButton secondary size="small" onClick={() => setSearchParams({})}>
+            Clear
+          </RuxButton>
         </div>
 
         <div className="grid gap-3 md:grid-cols-2">
-            {/* Satellite ID */}
-            <RuxSelect
+          <RuxSelect
             label="Satellite ID"
             value={searchParams.get("satelliteId") ?? ""}
             onRuxchange={(event) => {
-              const next = new URLSearchParams(searchParams);
-              const satelliteIdValue = (event.currentTarget as HTMLRuxSelectElement).value;
-              const satelliteId = Array.isArray(satelliteIdValue)
-                ? satelliteIdValue[0] ?? ""
-                : satelliteIdValue ?? "";
-
-              if (satelliteId.trim()) {
-                next.set("satelliteId", satelliteId);
-              } else {
-                next.delete("satelliteId");
-              }
-
-              setSearchParams(next);
+              const selectedValue = getSelectValue(
+                (event.currentTarget as HTMLRuxSelectElement).value,
+              );
+              updateFilter("satelliteId", selectedValue);
             }}
-            >
-              <RuxOption value="" label="All satellites">All satellites</RuxOption>
+          >
+            <RuxOption value="" label="All satellites">
+              All satellites
+            </RuxOption>
               {satelliteIds.map((satelliteId) => (
                 <RuxOption key={satelliteId} value={satelliteId} label={satelliteId}>
                   {satelliteId}
                 </RuxOption>
               ))}
-            </RuxSelect>
+          </RuxSelect>
 
-            {/* Health Status */}
-            <RuxSelect
+          <RuxSelect
             label="Health Status"
             value={searchParams.get("status") ?? ""}
             onRuxchange={(event) => {
-              const next = new URLSearchParams(searchParams);
-              const statusValue = (event.currentTarget as HTMLRuxSelectElement).value;
-              const status = Array.isArray(statusValue) ? statusValue[0] ?? "" : statusValue;
-
-              if (status) {
-                next.set("status", status);
-              } else {
-                next.delete("status");
-              }
-
-              setSearchParams(next);
+              const selectedValue = getSelectValue(
+                (event.currentTarget as HTMLRuxSelectElement).value,
+              );
+              updateFilter("status", selectedValue);
             }}
-            >
+          >
             <RuxOption value="" label="All statuses">All statuses</RuxOption>
             {HEALTH_STATUS_OPTIONS.map((statusOption) => (
               <RuxOption key={statusOption} value={statusOption} label={statusOption}>
                 {statusOption}
               </RuxOption>
             ))}
-            </RuxSelect>
+          </RuxSelect>
         </div>
-        </RuxContainer>
+      </RuxContainer>
     </div>
   );
 };
