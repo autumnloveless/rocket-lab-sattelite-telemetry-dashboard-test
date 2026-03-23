@@ -11,7 +11,7 @@ export const TelemetryDashboardPage = () => {
 
   // Using SWR for data fetching to simplify validation
   // Filter state lives in the URL for shareable links and refresh persistence.
-  const { telemetry, isLoading, errorMessage, createTelemetry, deleteTelemetry, refreshTelemetry } = useTelemetry();
+  const { telemetry, satelliteIds, isLoading, errorMessage, createTelemetry, deleteTelemetry, refreshTelemetry } = useTelemetry();
 
   return (
     <main className="mx-auto min-h-screen max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
@@ -31,7 +31,7 @@ export const TelemetryDashboardPage = () => {
             </RuxButton>
           </div>
 
-          <TelemetryFilters />
+          <TelemetryFilters satelliteIds={satelliteIds} />
 
           <TelemetryForm
             onCreateTelemetry={createTelemetry}

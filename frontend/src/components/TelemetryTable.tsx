@@ -4,9 +4,11 @@ import type { StatusTags } from "@astrouxds/astro-web-components";
 import {
   flexRender,
   getCoreRowModel,
+  getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
   type ColumnDef,
+  type PaginationState,
   type SortingState,
 } from "@tanstack/react-table";
 
@@ -39,6 +41,10 @@ export const TelemetryTable = ({
   onDeleteTelemetry,
 }: TelemetryTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
   const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -84,10 +90,12 @@ export const TelemetryTable = ({
   const table = useReactTable({
     data: telemetry,
     columns,
-    state: { sorting },
+    state: { sorting, pagination },
     onSortingChange: setSorting,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
   });
 
   return (
@@ -148,6 +156,29 @@ export const TelemetryTable = ({
           </tbody>
         </table>
       </div>
+
+
+        <div className="mt-3 flex items-center justify-center gap-2">
+          <RuxButton
+            secondary
+            size="small"
+            onClick={() => table.previousPage()}
+            disabled={!table.getCanPreviousPage()}
+          >
+            Previous
+          </RuxButton>
+          <span className="text-sm opacity-80">
+            Page {table.getPageCount() === 0 ? 0 : table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </span>
+          <RuxButton
+            secondary
+            size="small"
+            onClick={() => table.nextPage()}
+            disabled={!table.getCanNextPage()}
+          >
+            Next
+          </RuxButton>
+        </div>
 
       <RuxDialog open={pendingDeleteId !== null} onRuxdialogclosed={() => setPendingDeleteId(null)}>
         <span slot="header">Confirm Delete</span>

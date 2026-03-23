@@ -1,8 +1,12 @@
-import { RuxButton, RuxContainer, RuxInput, RuxOption, RuxSelect } from "@astrouxds/react";
+import { RuxButton, RuxContainer, RuxOption, RuxSelect } from "@astrouxds/react";
 import { useSearchParams } from "react-router";
 import { HEALTH_STATUS_OPTIONS } from "../types/telemetry";
 
-export const TelemetryFilters = () => {
+type TelemetryFiltersProps = {
+  satelliteIds: string[];
+};
+
+export const TelemetryFilters = ({ satelliteIds }: TelemetryFiltersProps) => {
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -16,13 +20,15 @@ export const TelemetryFilters = () => {
 
         <div className="grid gap-3 md:grid-cols-2">
             {/* Satellite ID */}
-            <RuxInput
+            <RuxSelect
             label="Satellite ID"
-            placeholder="e.g. SAT-1"
             value={searchParams.get("satelliteId") ?? ""}
             onRuxchange={(event) => {
               const next = new URLSearchParams(searchParams);
-              const satelliteId = (event.currentTarget as HTMLRuxInputElement).value;
+              const satelliteIdValue = (event.currentTarget as HTMLRuxSelectElement).value;
+              const satelliteId = Array.isArray(satelliteIdValue)
+                ? satelliteIdValue[0] ?? ""
+                : satelliteIdValue ?? "";
 
               if (satelliteId.trim()) {
                 next.set("satelliteId", satelliteId);
@@ -32,7 +38,14 @@ export const TelemetryFilters = () => {
 
               setSearchParams(next);
             }}
-            />
+            >
+              <RuxOption value="" label="All satellites">All satellites</RuxOption>
+              {satelliteIds.map((satelliteId) => (
+                <RuxOption key={satelliteId} value={satelliteId} label={satelliteId}>
+                  {satelliteId}
+                </RuxOption>
+              ))}
+            </RuxSelect>
 
             {/* Health Status */}
             <RuxSelect

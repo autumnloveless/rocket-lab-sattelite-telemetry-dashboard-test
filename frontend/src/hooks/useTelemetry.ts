@@ -13,9 +13,18 @@ export const useTelemetry = () => {
     status: searchParams.get("status") ?? "",
   };
   
-  // data key is based on filters
-  const swrKey = [ "telemetry", filters.satelliteId.trim(), filters.status ]
-  const query = useSWR(swrKey, () => telemetryService.list(filters));
+  // Fetch once and apply filters locally to keep UI behavior deterministic.
+  const swrKey = ["telemetry"];
+  const query = useSWR(swrKey, () => telemetryService.list({ satelliteId: "", status: "" }));
+  const allTelemetry = query.data ?? [];
+
+  const telemetry = allTelemetry.filter((entry) => {
+    const satelliteMatches = !filters.satelliteId.trim() || entry.satelliteId === filters.satelliteId.trim();
+    const statusMatches = !filters.status || entry.status === filters.status;
+    return satelliteMatches && statusMatches;
+  });
+
+  const satelliteIds = [...new Set(allTelemetry.map((entry) => entry.satelliteId))].sort();
 
   // helper function to call create API and then refresh data
   const createTelemetry = async (payload: CreateTelemetryPayload): Promise<void> => {
@@ -30,7 +39,8 @@ export const useTelemetry = () => {
   };
 
   return {
-    telemetry: query.data ?? [],
+    telemetry,
+    satelliteIds,
     isLoading: query.isLoading,
     errorMessage: query.error instanceof Error ? query.error.message : null,
     createTelemetry,

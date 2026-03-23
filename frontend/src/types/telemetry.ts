@@ -18,3 +18,8 @@ export type CreateTelemetryPayload = {
   velocity: number;
   status: HealthStatus;
 };
+
+export type TelemetryFilters = {
+  satelliteId: string;
+  status: string;
+};
