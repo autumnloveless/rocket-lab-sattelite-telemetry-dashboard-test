@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RuxButton, RuxContainer, RuxTag } from "@astrouxds/react";
+import { RuxButton, RuxContainer, RuxDialog, RuxTag } from "@astrouxds/react";
 import type { StatusTags } from "@astrouxds/astro-web-components";
 import {
   flexRender,
@@ -30,7 +30,7 @@ const formatTimestamp = (timestamp: string): string => {
     return timestamp;
   }
 
-  return parsed.toLocaleString();
+  return parsed.toISOString().replace("T", " ").replace("Z", " UTC");
 };
 
 export const TelemetryTable = ({
@@ -39,12 +39,32 @@ export const TelemetryTable = ({
   onDeleteTelemetry,
 }: TelemetryTableProps) => {
   const [sorting, setSorting] = useState<SortingState>([]);
+  const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   function DeleteButton({ id }: {id: number }) {
     return (
-      <RuxButton secondary size="small" onClick={() => onDeleteTelemetry(id) }>Delete</RuxButton>
+      <RuxButton iconOnly borderless icon="delete" size="small" onClick={() => setPendingDeleteId(id)}>Delete</RuxButton>
     );
   }
+
+  const pendingDeleteTelemetry = pendingDeleteId === null
+    ? null
+    : telemetry.find((entry) => entry.id === pendingDeleteId) ?? null;
+
+  const onConfirmDelete = async () => {
+    if (pendingDeleteId === null) {
+      return;
+    }
+
+    try {
+      setIsDeleting(true);
+      await onDeleteTelemetry(pendingDeleteId);
+      setPendingDeleteId(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   function Tag({ status }: {status: string }) {
     return (
@@ -128,6 +148,23 @@ export const TelemetryTable = ({
           </tbody>
         </table>
       </div>
+
+      <RuxDialog open={pendingDeleteId !== null} onRuxdialogclosed={() => setPendingDeleteId(null)}>
+        <span slot="header">Confirm Delete</span>
+        <div className="p-4">
+          {pendingDeleteTelemetry
+            ? `Delete telemetry entry ${pendingDeleteTelemetry.satelliteId} from ${formatTimestamp(pendingDeleteTelemetry.timestamp)}?`
+            : "Delete this telemetry entry?"}
+        </div>
+        <div slot="footer" className="flex justify-end gap-2">
+          <RuxButton secondary onClick={() => setPendingDeleteId(null)} disabled={isDeleting}>
+            Cancel
+          </RuxButton>
+          <RuxButton onClick={onConfirmDelete} disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Delete"}
+          </RuxButton>
+        </div>
+      </RuxDialog>
     </RuxContainer>
   );
 };
